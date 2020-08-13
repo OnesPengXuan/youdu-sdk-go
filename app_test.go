@@ -8,10 +8,11 @@ import (
 )
 
 const (
-	_Buin      = 666666
-	_AppId     = `yd37D192E9F20E448192827A001A84D443`
-	_EncAesKey = `AY2O92Lpyr4M2IOXT05NQG3eaXd72FlS/QZ1l4vGKsQ=`
-	_User      = "sa08"
+	_Buin       = 666666
+	_AppId      = `yd37D192E9F20E448192827A001A84D443`
+	_EncAesKey  = `AY2O92Lpyr4M2IOXT05NQG3eaXd72FlS/QZ1l4vGKsQ=`
+	_User       = "sa08"
+	_Department = ""
 )
 
 func TestAllApi(t *testing.T) {
@@ -78,7 +79,7 @@ func TestAllApi(t *testing.T) {
 	t.Log("Download file success.")
 
 	//发送文本消息
-	err = demo.SendTxtMsg(_User, "第三方接口测试123abc!@#$%^^&*()/::|/::)-+=-")
+	err = demo.SendTxtMsg(_User, _Department, "第三方接口测试123abc!@#$%^^&*()/::|/::)-+=-")
 	if err != nil {
 		t.Error(err)
 		return
@@ -86,7 +87,7 @@ func TestAllApi(t *testing.T) {
 	t.Log("Send text msg success.")
 
 	//传入mediaId，发送图片信息
-	err = demo.SendImgMsg(_User, imgId)
+	err = demo.SendImgMsg(_User, _Department, imgId)
 	if err != nil {
 		t.Error(err)
 		return
@@ -94,7 +95,7 @@ func TestAllApi(t *testing.T) {
 	t.Log("Send image msg success.")
 
 	//传入mediaId，发送文件信息
-	err = demo.SendFileMsg(_User, fileId)
+	err = demo.SendFileMsg(_User, _Department, fileId)
 	if err != nil {
 		t.Error(err)
 		return
@@ -102,7 +103,7 @@ func TestAllApi(t *testing.T) {
 	t.Log("Send file msg success.")
 
 	//传入路径，上传并发送图片信息
-	err = demo.SendImg(_User, "file/lake.jpg")
+	err = demo.SendImg(_User, _Department, "file/lake.jpg")
 	if err != nil {
 		t.Error(err)
 		return
@@ -110,7 +111,7 @@ func TestAllApi(t *testing.T) {
 	t.Log("Send image success.")
 
 	//传入路径，上传并发送文件信息
-	err = demo.SendFile(_User, "hello.txt", "file/hello.txt")
+	err = demo.SendFile(_User, _Department, "hello.txt", "file/hello.txt")
 	if err != nil {
 		t.Error(err)
 		return
@@ -127,7 +128,7 @@ func TestAllApi(t *testing.T) {
 		ShowFront: 1,
 	}
 	//发送图文信息
-	err = demo.SendMpnewsMsg(_User, []*Mpnews{m})
+	err = demo.SendMpnewsMsg(_User, _Department, []*Mpnews{m})
 	if err != nil {
 		t.Error(err)
 		return
@@ -141,7 +142,7 @@ func TestAllApi(t *testing.T) {
 		Path:   "file/lake.jpg",
 		//MediaId: imgId,
 	}
-	err = demo.SendExlinkMsg(_User, []*Exlink{link})
+	err = demo.SendExlinkMsg(_User, _Department, []*Exlink{link})
 	if err != nil {
 		t.Error(err)
 		return

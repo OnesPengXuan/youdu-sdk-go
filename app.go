@@ -474,7 +474,7 @@ func (this *MsgApp) SendFileMsg(toUser, toDept, mediaId string) error {
 	@toUser 消息接收者
 	如果发送给多人，则用户间用"|"隔开，如cs1|cs2|cs3
 */
-func (this *MsgApp) SendMpnewsMsg(toUser, toDept, string, mpnews []*Mpnews) error {
+func (this *MsgApp) SendMpnewsMsg(toUser, toDept string, mpnews []*Mpnews) error {
 	mplist := make([]interface{}, 0)
 	for _, mp := range mpnews {
 		news := NewRequest()
@@ -516,7 +516,7 @@ func (this *MsgApp) SendMpnewsMsg(toUser, toDept, string, mpnews []*Mpnews) erro
 	@digest 文章摘要
 	@media_id 图片的media_id, 如果media_id为空, 则从path读取文件
 */
-func (this *MsgApp) SendExlinkMsg(toUser, toDept, string, links []*Exlink) error {
+func (this *MsgApp) SendExlinkMsg(toUser, toDept string, links []*Exlink) error {
 	list := make([]interface{}, 0)
 	for _, link := range links {
 		ex := NewRequest()

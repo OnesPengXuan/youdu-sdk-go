@@ -65,20 +65,20 @@ func NewMsgApp(buin int32, appId, encAesKey string) (*MsgApp, error) {
 	如：http.ListenAndServe(":8899", demo)
 
 */
-func (this *MsgApp) SetReceiver(r Receiver) {
-	this.recv = r
+func (m *MsgApp) SetReceiver(r Receiver) {
+	m.recv = r
 }
 
-func (this *MsgApp) encrypt(data []byte) (string, error) {
-	return AesEncrypt(data, this.aesKey, this.appId)
+func (m *MsgApp) encrypt(data []byte) (string, error) {
+	return AesEncrypt(data, m.aesKey, m.appId)
 }
 
-func (this *MsgApp) decrypt(s string) (*RawMsg, error) {
-	return AesDecrypt(s, this.aesKey)
+func (m *MsgApp) decrypt(s string) (*RawMsg, error) {
+	return AesDecrypt(s, m.aesKey)
 }
 
-func (this *MsgApp) post(api, ct string, req []byte) (*ApiResponse, error) {
-	httpRsp, err := this.hc.Post(Server_Addr+api+"?accessToken="+this.accToken, ct, bytes.NewBuffer(req))
+func (m *MsgApp) post(api, ct string, req []byte) (*ApiResponse, error) {
+	httpRsp, err := m.hc.Post(Server_Addr+api+"?accessToken="+m.accToken, ct, bytes.NewBuffer(req))
 	if err != nil {
 		return nil, err
 	}
@@ -97,8 +97,8 @@ func (this *MsgApp) post(api, ct string, req []byte) (*ApiResponse, error) {
 	return rsp, nil
 }
 
-func (this *MsgApp) getFile(req []byte) ([]byte, error) {
-	httpRsp, err := this.hc.Post(Server_Addr+API_DOWNLOAD_FILE+"?accessToken="+this.accToken, HttpJsonType, bytes.NewBuffer(req))
+func (m *MsgApp) getFile(req []byte) ([]byte, error) {
+	httpRsp, err := m.hc.Post(Server_Addr+API_DOWNLOAD_FILE+"?accessToken="+m.accToken, HttpJsonType, bytes.NewBuffer(req))
 	if err != nil {
 		return nil, err
 	}
@@ -116,20 +116,20 @@ func (this *MsgApp) getFile(req []byte) ([]byte, error) {
 	获取token
 	加密一个时间戳，传到服务器
 */
-func (this *MsgApp) GetToken() (string, int64, error) {
+func (m *MsgApp) GetToken() (string, int64, error) {
 	timex := fmt.Sprint(time.Now().Unix())
-	cipherText, err := this.encrypt([]byte(timex))
+	cipherText, err := m.encrypt([]byte(timex))
 	if err != nil {
 		return "", 0, Error("Encrypt error", err)
 	}
 
 	req := NewRequest()
-	req.Set("buin", this.buin)
-	req.Set("appId", this.appId)
+	req.Set("buin", m.buin)
+	req.Set("appId", m.appId)
 	req.Set("encrypt", cipherText)
 	bs, _ := req.Encode()
 
-	rsp, err := this.post(API_GET_TOKEN, HttpJsonType, bs)
+	rsp, err := m.post(API_GET_TOKEN, HttpJsonType, bs)
 	if err != nil {
 		return "", 0, Error("Post to get token error", err)
 	}
@@ -141,15 +141,15 @@ func (this *MsgApp) GetToken() (string, int64, error) {
 	if err != nil {
 		return "", 0, Error("Get body error", err)
 	}
-	raw, err := this.decrypt(enc)
+	raw, err := m.decrypt(enc)
 	if err != nil {
 		return "", 0, Error("Decrypt access token error:", err)
 	}
 	js, _ := NewJson(raw.Data)
-	this.accToken, _ = js.Get("accessToken").String()
+	m.accToken, _ = js.Get("accessToken").String()
 
 	expire, _ := js.Get("expireIn").Int64()
-	return this.accToken, expire, nil
+	return m.accToken, expire, nil
 }
 
 /*
@@ -157,8 +157,8 @@ func (this *MsgApp) GetToken() (string, int64, error) {
 	传入图片名字与图片数据
 	支持jpg, png, gif格式
 */
-func (this *MsgApp) UploadImageBytes(name string, data []byte) (string, error) {
-	return this.upload(MediaTypeImage, name, data)
+func (m *MsgApp) UploadImageBytes(name string, data []byte) (string, error) {
+	return m.upload(MediaTypeImage, name, data)
 }
 
 /*
@@ -166,35 +166,35 @@ func (this *MsgApp) UploadImageBytes(name string, data []byte) (string, error) {
 	传入图片名字与路径
 	支持jpg, png, gif格式
 */
-func (this *MsgApp) UploadImage(name string, path string) (string, error) {
+func (m *MsgApp) UploadImage(name string, path string) (string, error) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return "", err
 	}
-	return this.upload(MediaTypeImage, name, data)
+	return m.upload(MediaTypeImage, name, data)
 }
 
 /*
 	上传文件
 	传入文件名与文件数据
 */
-func (this *MsgApp) UploadFileBytes(name string, data []byte) (string, error) {
-	return this.upload(MediaTypeFile, name, data)
+func (m *MsgApp) UploadFileBytes(name string, data []byte) (string, error) {
+	return m.upload(MediaTypeFile, name, data)
 }
 
 /*
 	上传文件
 	传入文件名与文件路径
 */
-func (this *MsgApp) UploadFile(name string, path string) (string, error) {
+func (m *MsgApp) UploadFile(name string, path string) (string, error) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return "", err
 	}
-	return this.upload(MediaTypeFile, name, data)
+	return m.upload(MediaTypeFile, name, data)
 }
 
-func (this *MsgApp) upload(ftype, fname string, data []byte) (string, error) {
+func (m *MsgApp) upload(ftype, fname string, data []byte) (string, error) {
 	body := bytes.NewBufferString("")
 	mwr := multipart.NewWriter(body)
 	req := NewRequest()
@@ -202,17 +202,17 @@ func (this *MsgApp) upload(ftype, fname string, data []byte) (string, error) {
 	req.Set("name", fname)
 
 	bs, _ := req.Encode()
-	enc, _ := this.encrypt(bs)
-	mwr.WriteField("buin", fmt.Sprint(this.buin))
-	mwr.WriteField("appId", this.appId)
+	enc, _ := m.encrypt(bs)
+	mwr.WriteField("buin", fmt.Sprint(m.buin))
+	mwr.WriteField("appId", m.appId)
 	mwr.WriteField("encrypt", enc)
 
 	pw, _ := mwr.CreateFormFile("file", fname)
-	msg, _ := this.encrypt(data)
+	msg, _ := m.encrypt(data)
 	pw.Write([]byte(msg))
 	mwr.Close()
 
-	rsp, err := this.post(API_UPLOAD_FILE, mwr.FormDataContentType(), body.Bytes())
+	rsp, err := m.post(API_UPLOAD_FILE, mwr.FormDataContentType(), body.Bytes())
 	if err != nil {
 		return "", Error("Post to upload file error", err)
 	}
@@ -224,7 +224,7 @@ func (this *MsgApp) upload(ftype, fname string, data []byte) (string, error) {
 	if err != nil {
 		return "", Error("Get encrypt error", err)
 	}
-	raw, err := this.decrypt(enc)
+	raw, err := m.decrypt(enc)
 	if err != nil {
 		return "", Error("Aes decrypt error", err)
 	}
@@ -241,8 +241,8 @@ func (this *MsgApp) upload(ftype, fname string, data []byte) (string, error) {
 	传入mediaId
 	返回文件数据
 */
-func (this *MsgApp) DownloadFile(mediaId string) ([]byte, error) {
-	bs, err := this.download(mediaId)
+func (m *MsgApp) DownloadFile(mediaId string) ([]byte, error) {
+	bs, err := m.download(mediaId)
 	if err != nil {
 		return nil, err
 	}
@@ -254,20 +254,20 @@ func (this *MsgApp) DownloadFile(mediaId string) ([]byte, error) {
 	并保存到指定路径
 	自动创建路径中的目录与文件
 */
-func (this *MsgApp) DownloadFileSave(mediaId string, path string) error {
-	data, err := this.download(mediaId)
+func (m *MsgApp) DownloadFileSave(mediaId string, path string) error {
+	data, err := m.download(mediaId)
 	if err != nil {
 		return err
 	}
-	return this.save(data, path)
+	return m.save(data, path)
 }
 
 /*
 	下载图片
 	返回图片数据
 */
-func (this *MsgApp) DownloadImage(mediaId string) ([]byte, error) {
-	bs, err := this.download(mediaId)
+func (m *MsgApp) DownloadImage(mediaId string) ([]byte, error) {
+	bs, err := m.download(mediaId)
 	if err != nil {
 		return nil, err
 	}
@@ -279,12 +279,12 @@ func (this *MsgApp) DownloadImage(mediaId string) ([]byte, error) {
 	并保存到指定路径
 	自动创建路径中的目录与文件
 */
-func (this *MsgApp) DownloadImageSave(mediaId string, path string) error {
-	data, err := this.download(mediaId)
+func (m *MsgApp) DownloadImageSave(mediaId string, path string) error {
+	data, err := m.download(mediaId)
 	if err != nil {
 		return err
 	}
-	return this.save(data, path)
+	return m.save(data, path)
 }
 
 func (*MsgApp) save(data []byte, path string) error {
@@ -296,43 +296,43 @@ func (*MsgApp) save(data []byte, path string) error {
 	return ioutil.WriteFile(path, data, 0666)
 }
 
-func (this *MsgApp) download(mediaId string) ([]byte, error) {
+func (m *MsgApp) download(mediaId string) ([]byte, error) {
 	req := NewRequest()
 	req.Set("mediaId", mediaId)
 
 	bs, _ := req.Encode()
-	enc, _ := this.encrypt(bs)
+	enc, _ := m.encrypt(bs)
 	em := NewRequest()
-	em.Set("buin", this.buin)
-	em.Set("appId", this.appId)
+	em.Set("buin", m.buin)
+	em.Set("appId", m.appId)
 	em.Set("encrypt", enc)
 
 	bs, _ = em.Encode()
-	bd, err := this.getFile(bs)
+	bd, err := m.getFile(bs)
 	if err != nil {
 		return nil, Error("Download file error", err)
 	}
 
-	raw, err := this.decrypt(string(bd))
+	raw, err := m.decrypt(string(bd))
 	if err != nil {
 		return nil, Error("Decrypt error", err)
 	}
 	return raw.Data, nil
 }
 
-func (this *MsgApp) SearchFile(mediaId string) (string, int64, error) {
+func (m *MsgApp) SearchFile(mediaId string) (string, int64, error) {
 	req := NewRequest()
 	req.Set("mediaId", mediaId)
 
 	bs, _ := req.Encode()
-	enc, _ := this.encrypt(bs)
+	enc, _ := m.encrypt(bs)
 	em := NewRequest()
-	em.Set("buin", this.buin)
-	em.Set("appId", this.appId)
+	em.Set("buin", m.buin)
+	em.Set("appId", m.appId)
 	em.Set("encrypt", enc)
 
 	bs, _ = em.Encode()
-	rsp, err := this.post(API_SEARCH_FILE, HttpJsonType, bs)
+	rsp, err := m.post(API_SEARCH_FILE, HttpJsonType, bs)
 	if err != nil {
 		return "", 0, Error("Post to search file error", err)
 	}
@@ -340,7 +340,7 @@ func (this *MsgApp) SearchFile(mediaId string) (string, int64, error) {
 	if err != nil {
 		return "", 0, Error("Get encrypt error", err)
 	}
-	raw, err := this.decrypt(enc)
+	raw, err := m.decrypt(enc)
 	if err != nil {
 		return "", 0, Error("Decrypt error", err)
 	}
@@ -361,7 +361,7 @@ func (this *MsgApp) SearchFile(mediaId string) (string, int64, error) {
 	传入接收者用户名与消息内容
 	如果发送给多人，则用户间用"|"隔开，如cs1|cs2|cs3
 */
-func (this *MsgApp) SendTxtMsg(toUser, toDept, content string) error {
+func (m *MsgApp) SendTxtMsg(toUser, toDept, content string) error {
 	msg := NewRequest()
 	msg.Set("toUser", toUser)
 	msg.Set("toDept", toDept)
@@ -371,14 +371,14 @@ func (this *MsgApp) SendTxtMsg(toUser, toDept, content string) error {
 	})
 
 	bs, _ := msg.Encode()
-	enc, _ := this.encrypt(bs)
+	enc, _ := m.encrypt(bs)
 	req := NewRequest()
-	req.Set("buin", this.buin)
-	req.Set("appId", this.appId)
+	req.Set("buin", m.buin)
+	req.Set("appId", m.appId)
 	req.Set("encrypt", enc)
 
 	bs, _ = req.Encode()
-	rsp, err := this.post(API_SEND_MSG, HttpJsonType, bs)
+	rsp, err := m.post(API_SEND_MSG, HttpJsonType, bs)
 	if err != nil {
 		return Error("Send text msg error", err)
 	}
@@ -394,16 +394,16 @@ func (this *MsgApp) SendTxtMsg(toUser, toDept, content string) error {
 	如果发送给多人，则用户间用"|"隔开，如cs1|cs2|cs3
 */
 
-func (this *MsgApp) SendImg(toUser, toDept, path string) error {
+func (m *MsgApp) SendImg(toUser, toDept, path string) error {
 	_, name := filepath.Split(path)
-	mediaId, err := this.UploadFile(name, path)
+	mediaId, err := m.UploadFile(name, path)
 	if err != nil {
 		return err
 	}
-	return this.SendImgMsg(toUser, toDept, mediaId)
+	return m.SendImgMsg(toUser, toDept, mediaId)
 }
 
-func (this *MsgApp) SendImgMsg(toUser, toDept, mediaId string) error {
+func (m *MsgApp) SendImgMsg(toUser, toDept, mediaId string) error {
 	msg := NewRequest()
 	msg.Set("toUser", toUser)
 	msg.Set("toDept", toDept)
@@ -412,15 +412,15 @@ func (this *MsgApp) SendImgMsg(toUser, toDept, mediaId string) error {
 		"media_id": mediaId,
 	})
 	bs, _ := msg.Encode()
-	enc, _ := this.encrypt(bs)
+	enc, _ := m.encrypt(bs)
 
 	req := NewRequest()
-	req.Set("buin", this.buin)
-	req.Set("appId", this.appId)
+	req.Set("buin", m.buin)
+	req.Set("appId", m.appId)
 	req.Set("encrypt", enc)
 
 	bs, _ = req.Encode()
-	rsp, err := this.post(API_SEND_MSG, HttpJsonType, bs)
+	rsp, err := m.post(API_SEND_MSG, HttpJsonType, bs)
 	if err != nil {
 		return Error("Send image msg error", err)
 	}
@@ -432,15 +432,15 @@ func (this *MsgApp) SendImgMsg(toUser, toDept, mediaId string) error {
 	传入已上传文件的mediaId与接收者用户名
 	如果发送给多人，则用户间用"|"隔开，如cs1|cs2|cs3
 */
-func (this *MsgApp) SendFile(toUser, toDept, name, path string) error {
-	mediaId, err := this.UploadFile(name, path)
+func (m *MsgApp) SendFile(toUser, toDept, name, path string) error {
+	mediaId, err := m.UploadFile(name, path)
 	if err != nil {
 		return err
 	}
-	return this.SendFileMsg(toUser, toDept, mediaId)
+	return m.SendFileMsg(toUser, toDept, mediaId)
 }
 
-func (this *MsgApp) SendFileMsg(toUser, toDept, mediaId string) error {
+func (m *MsgApp) SendFileMsg(toUser, toDept, mediaId string) error {
 	msg := NewRequest()
 	msg.Set("toUser", toUser)
 	msg.Set("toDept", toDept)
@@ -450,14 +450,14 @@ func (this *MsgApp) SendFileMsg(toUser, toDept, mediaId string) error {
 	})
 
 	bs, _ := msg.Encode()
-	enc, _ := this.encrypt(bs)
+	enc, _ := m.encrypt(bs)
 	req := NewRequest()
-	req.Set("buin", this.buin)
-	req.Set("appId", this.appId)
+	req.Set("buin", m.buin)
+	req.Set("appId", m.appId)
 	req.Set("encrypt", enc)
 
 	bs, _ = req.Encode()
-	rsp, err := this.post(API_SEND_MSG, HttpJsonType, bs)
+	rsp, err := m.post(API_SEND_MSG, HttpJsonType, bs)
 	if err != nil {
 		return Error("send file msg error", err)
 	}
@@ -474,13 +474,13 @@ func (this *MsgApp) SendFileMsg(toUser, toDept, mediaId string) error {
 	@toUser 消息接收者
 	如果发送给多人，则用户间用"|"隔开，如cs1|cs2|cs3
 */
-func (this *MsgApp) SendMpnewsMsg(toUser, toDept string, mpnews []*Mpnews) error {
+func (m *MsgApp) SendMpnewsMsg(toUser, toDept string, mpnews []*Mpnews) error {
 	mplist := make([]interface{}, 0)
 	for _, mp := range mpnews {
 		news := NewRequest()
 		news.Set("title", mp.Title)
 		if len(mp.MediaId) == 0 {
-			mp.MediaId, _ = this.UploadImage("mpnews.jpg", mp.Path)
+			mp.MediaId, _ = m.UploadImage("mpnews.jpg", mp.Path)
 		}
 		news.Set("media_id", mp.MediaId)
 		news.Set("digest", mp.Digest)
@@ -496,13 +496,13 @@ func (this *MsgApp) SendMpnewsMsg(toUser, toDept string, mpnews []*Mpnews) error
 	msg.Set("mpnews", mplist)
 
 	bs, _ := msg.Encode()
-	enc, _ := this.encrypt(bs)
+	enc, _ := m.encrypt(bs)
 	req := NewRequest()
-	req.Set("buin", this.buin)
-	req.Set("appId", this.appId)
+	req.Set("buin", m.buin)
+	req.Set("appId", m.appId)
 	req.Set("encrypt", enc)
 	bs, _ = req.Encode()
-	rsp, err := this.post(API_SEND_MSG, HttpJsonType, bs)
+	rsp, err := m.post(API_SEND_MSG, HttpJsonType, bs)
 	if err != nil {
 		return Error("Send mpnews error", err)
 	}
@@ -516,7 +516,7 @@ func (this *MsgApp) SendMpnewsMsg(toUser, toDept string, mpnews []*Mpnews) error
 	@digest 文章摘要
 	@media_id 图片的media_id, 如果media_id为空, 则从path读取文件
 */
-func (this *MsgApp) SendExlinkMsg(toUser, toDept string, links []*Exlink) error {
+func (m *MsgApp) SendExlinkMsg(toUser, toDept string, links []*Exlink) error {
 	list := make([]interface{}, 0)
 	for _, link := range links {
 		ex := NewRequest()
@@ -524,7 +524,7 @@ func (this *MsgApp) SendExlinkMsg(toUser, toDept string, links []*Exlink) error 
 		ex.Set("url", link.Url)
 		ex.Set("digest", link.Digest)
 		if len(link.MediaId) == 0 {
-			link.MediaId, _ = this.UploadImage("exlink.jpg", link.Path)
+			link.MediaId, _ = m.UploadImage("exlink.jpg", link.Path)
 		}
 		ex.Set("media_id", link.MediaId)
 		list = append(list, ex)
@@ -536,24 +536,24 @@ func (this *MsgApp) SendExlinkMsg(toUser, toDept string, links []*Exlink) error 
 	msg.Set("exlink", list)
 
 	bs, _ := msg.Encode()
-	enc, _ := this.encrypt(bs)
+	enc, _ := m.encrypt(bs)
 	req := NewRequest()
-	req.Set("buin", this.buin)
-	req.Set("appId", this.appId)
+	req.Set("buin", m.buin)
+	req.Set("appId", m.appId)
 	req.Set("encrypt", enc)
 
 	bs, _ = req.Encode()
-	rsp, err := this.post(API_SEND_MSG, HttpJsonType, bs)
+	rsp, err := m.post(API_SEND_MSG, HttpJsonType, bs)
 	if err != nil {
 		return err
 	}
 	return rsp.Error()
 }
 
-func (this *MsgApp) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+func (m *MsgApp) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	switch req.URL.Path {
 	case Callback_Url:
-		this.Receive(rw, req)
+		m.Receive(rw, req)
 	default:
 		http.NotFound(rw, req)
 	}
@@ -565,7 +565,7 @@ func (this *MsgApp) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	并且需设置监听端口，例
 	http.ListenAndServe(":8899", app)
 */
-func (this *MsgApp) Receive(rw http.ResponseWriter, req *http.Request) {
+func (m *MsgApp) Receive(rw http.ResponseWriter, req *http.Request) {
 	log.Println("Receive msg")
 	bs, _ := ioutil.ReadAll(req.Body)
 	var p ReceivePack
@@ -574,7 +574,7 @@ func (this *MsgApp) Receive(rw http.ResponseWriter, req *http.Request) {
 		log.Println("Receive package error:", err)
 		return
 	}
-	raw, err := this.decrypt(p.Encrypt)
+	raw, err := m.decrypt(p.Encrypt)
 	if err != nil {
 		log.Println("Decrypt error:", err)
 		return
@@ -587,8 +587,8 @@ func (this *MsgApp) Receive(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if this.recv != nil {
-		go this.recv.Receive(&msg)
+	if m.recv != nil {
+		go m.recv.Receive(&msg)
 	}
 
 	log.Println("Recv msg:", msg)

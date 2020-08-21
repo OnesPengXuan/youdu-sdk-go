@@ -49,7 +49,7 @@ func NewMsgApp(buin int32, appId, encAesKey string) (*MsgApp, error) {
 		return nil, errors.New("Base64 decode error: " + err.Error())
 	}
 	if len(key) != 32 {
-		return nil, errors.New("Invalid aes key size")
+		return nil, errors.New("invalid aes key size")
 	}
 	return &MsgApp{
 		buin:   buin,
@@ -78,19 +78,50 @@ func (m *MsgApp) decrypt(s string) (*RawMsg, error) {
 }
 
 func (m *MsgApp) post(api, ct string, req []byte) (*ApiResponse, error) {
-	httpRsp, err := m.hc.Post(Server_Addr+api+"?accessToken="+m.accToken, ct, bytes.NewBuffer(req))
+	httpRsp, err := m.hc.Post(ServerAddr+api+"?accessToken="+m.accToken, ct, bytes.NewBuffer(req))
 	if err != nil {
 		return nil, err
 	}
 	if httpRsp.StatusCode != http.StatusOK {
 		return nil, Error(httpRsp.Status, nil)
 	}
+	defer httpRsp.Body.Close()
 	bd, err := ioutil.ReadAll(httpRsp.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	rsp, err := NewReponse(bd)
+	rsp, err := NewResponse(bd)
+	if err != nil {
+		return nil, Error("Response unmarshal error", err)
+	}
+	return rsp, nil
+}
+
+func (m *MsgApp) get(api string, queryStr map[string]string) (*ApiResponse, error) {
+	req, err := http.NewRequest("GET", ServerAddr+api+"?accessToken="+m.accToken, nil)
+	if err != nil {
+		return nil, err
+	}
+	q := req.URL.Query()
+	for key, value := range queryStr {
+		q.Add(key, value)
+	}
+	req.URL.RawQuery = q.Encode()
+	httpRsp, err := m.hc.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if httpRsp.StatusCode != http.StatusOK {
+		return nil, Error(httpRsp.Status, nil)
+	}
+	defer httpRsp.Body.Close()
+	bd, err := ioutil.ReadAll(httpRsp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	rsp, err := NewResponse(bd)
 	if err != nil {
 		return nil, Error("Response unmarshal error", err)
 	}
@@ -98,7 +129,7 @@ func (m *MsgApp) post(api, ct string, req []byte) (*ApiResponse, error) {
 }
 
 func (m *MsgApp) getFile(req []byte) ([]byte, error) {
-	httpRsp, err := m.hc.Post(Server_Addr+API_DOWNLOAD_FILE+"?accessToken="+m.accToken, HttpJsonType, bytes.NewBuffer(req))
+	httpRsp, err := m.hc.Post(ServerAddr+API_DOWNLOAD_FILE+"?accessToken="+m.accToken, HttpJsonType, bytes.NewBuffer(req))
 	if err != nil {
 		return nil, err
 	}
@@ -474,13 +505,13 @@ func (m *MsgApp) SendFileMsg(toUser, toDept, mediaId string) error {
 	@toUser 消息接收者
 	如果发送给多人，则用户间用"|"隔开，如cs1|cs2|cs3
 */
-func (m *MsgApp) SendMpnewsMsg(toUser, toDept string, mpnews []*Mpnews) error {
+func (m *MsgApp) SendMpNewsMsg(toUser, toDept string, MpNews []*MpNews) error {
 	mplist := make([]interface{}, 0)
-	for _, mp := range mpnews {
+	for _, mp := range MpNews {
 		news := NewRequest()
 		news.Set("title", mp.Title)
 		if len(mp.MediaId) == 0 {
-			mp.MediaId, _ = m.UploadImage("mpnews.jpg", mp.Path)
+			mp.MediaId, _ = m.UploadImage("MpNews.jpg", mp.Path)
 		}
 		news.Set("media_id", mp.MediaId)
 		news.Set("digest", mp.Digest)
@@ -492,8 +523,8 @@ func (m *MsgApp) SendMpnewsMsg(toUser, toDept string, mpnews []*Mpnews) error {
 	msg := NewRequest()
 	msg.Set("toUser", toUser)
 	msg.Set("toDept", toDept)
-	msg.Set("msgType", MsgTypeMpnews)
-	msg.Set("mpnews", mplist)
+	msg.Set("msgType", MsgTypeMpNews)
+	msg.Set("MpNews", mplist)
 
 	bs, _ := msg.Encode()
 	enc, _ := m.encrypt(bs)
@@ -504,7 +535,7 @@ func (m *MsgApp) SendMpnewsMsg(toUser, toDept string, mpnews []*Mpnews) error {
 	bs, _ = req.Encode()
 	rsp, err := m.post(API_SEND_MSG, HttpJsonType, bs)
 	if err != nil {
-		return Error("Send mpnews error", err)
+		return Error("Send MpNews error", err)
 	}
 	return rsp.Error()
 }
@@ -516,7 +547,7 @@ func (m *MsgApp) SendMpnewsMsg(toUser, toDept string, mpnews []*Mpnews) error {
 	@digest 文章摘要
 	@media_id 图片的media_id, 如果media_id为空, 则从path读取文件
 */
-func (m *MsgApp) SendExlinkMsg(toUser, toDept string, links []*Exlink) error {
+func (m *MsgApp) SendExLinkMsg(toUser, toDept string, links []*ExLink) error {
 	list := make([]interface{}, 0)
 	for _, link := range links {
 		ex := NewRequest()
@@ -524,7 +555,7 @@ func (m *MsgApp) SendExlinkMsg(toUser, toDept string, links []*Exlink) error {
 		ex.Set("url", link.Url)
 		ex.Set("digest", link.Digest)
 		if len(link.MediaId) == 0 {
-			link.MediaId, _ = m.UploadImage("exlink.jpg", link.Path)
+			link.MediaId, _ = m.UploadImage("ExLink.jpg", link.Path)
 		}
 		ex.Set("media_id", link.MediaId)
 		list = append(list, ex)
@@ -532,8 +563,8 @@ func (m *MsgApp) SendExlinkMsg(toUser, toDept string, links []*Exlink) error {
 	msg := NewRequest()
 	msg.Set("toUser", toUser)
 	msg.Set("toDept", toDept)
-	msg.Set("msgType", MsgTypeExlink)
-	msg.Set("exlink", list)
+	msg.Set("msgType", MsgTypeExLink)
+	msg.Set("ExLink", list)
 
 	bs, _ := msg.Encode()
 	enc, _ := m.encrypt(bs)
@@ -552,7 +583,7 @@ func (m *MsgApp) SendExlinkMsg(toUser, toDept string, links []*Exlink) error {
 
 func (m *MsgApp) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	switch req.URL.Path {
-	case Callback_Url:
+	case CallbackUrl:
 		m.Receive(rw, req)
 	default:
 		http.NotFound(rw, req)
@@ -593,4 +624,33 @@ func (m *MsgApp) Receive(rw http.ResponseWriter, req *http.Request) {
 
 	log.Println("Recv msg:", msg)
 	rw.Write([]byte(msg.PackageId))
+}
+
+/*
+	获取用户信息
+*/
+func (m *MsgApp) GetUserInfo(user string) (*YdUserInfo, error) {
+	queryStrMap := make(map[string]string)
+	queryStrMap[QUERY_USERID] = user
+	rsp, err := m.get(API_GET_USER, queryStrMap)
+	if err != nil {
+		return nil, err
+	}
+	if !rsp.StatusOK() {
+		return nil, rsp.Error()
+	}
+	enc, err := rsp.GetString("encrypt")
+	if err != nil {
+		return nil, Error("Get body error", err)
+	}
+	raw, err := m.decrypt(enc)
+	if err != nil {
+		return nil, Error("Decrypt access token error:", err)
+	}
+	userInfo := new(YdUserInfo)
+	err = json.Unmarshal(raw.Data, userInfo)
+	if err != nil {
+		return nil, err
+	}
+	return userInfo, nil
 }

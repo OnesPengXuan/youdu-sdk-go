@@ -27,7 +27,7 @@ type ApiResponse struct {
 	body    []byte
 }
 
-func NewReponse(bs []byte) (*ApiResponse, error) {
+func NewResponse(bs []byte) (*ApiResponse, error) {
 	rsp := ApiResponse{
 		body: bs,
 	}
@@ -47,8 +47,8 @@ func NewReponse(bs []byte) (*ApiResponse, error) {
 	return &rsp, nil
 }
 
-func (this *ApiResponse) GetString(key string) (string, error) {
-	n, ok := this.param[key]
+func (rsp *ApiResponse) GetString(key string) (string, error) {
+	n, ok := rsp.param[key]
 	if !ok {
 		return "", ErrNoSuchField
 	}
@@ -59,8 +59,8 @@ func (this *ApiResponse) GetString(key string) (string, error) {
 	return s, nil
 }
 
-func (this *ApiResponse) GetInt32(key string) (int32, error) {
-	n, ok := this.param[key]
+func (rsp *ApiResponse) GetInt32(key string) (int32, error) {
+	n, ok := rsp.param[key]
 	if !ok {
 		return 0, ErrNoSuchField
 	}
@@ -71,21 +71,21 @@ func (this *ApiResponse) GetInt32(key string) (int32, error) {
 	return int32(nn), nil
 }
 
-func (this *ApiResponse) Status() string {
-	return fmt.Sprintf("errcode: %d, errmsg: %s", this.ErrCode, this.ErrMsg)
+func (rsp *ApiResponse) Status() string {
+	return fmt.Sprintf("errcode: %d, errmsg: %s", rsp.ErrCode, rsp.ErrMsg)
 }
 
-func (this *ApiResponse) StatusOK() bool {
-	return this.ErrCode == StatusOK
+func (rsp *ApiResponse) StatusOK() bool {
+	return rsp.ErrCode == StatusOK
 }
 
-func (this *ApiResponse) Error() error {
-	if this.StatusOK() {
+func (rsp *ApiResponse) Error() error {
+	if rsp.StatusOK() {
 		return nil
 	}
-	return errors.New(this.Status())
+	return errors.New(rsp.Status())
 }
 
-func (this *ApiResponse) Body() []byte {
-	return this.body
+func (rsp *ApiResponse) Body() []byte {
+	return rsp.body
 }

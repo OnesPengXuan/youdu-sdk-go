@@ -16,7 +16,7 @@ const (
 )
 
 func TestAllApi(t *testing.T) {
-	Server_Addr = "http://localhost:7080"
+	ServerAddr = "http://localhost:7080"
 	demo, _ := NewMsgApp(_Buin, _AppId, _EncAesKey)
 
 	go http.ListenAndServe(":8899", demo)
@@ -118,7 +118,7 @@ func TestAllApi(t *testing.T) {
 	}
 	t.Log("Send file success.")
 
-	m := &Mpnews{
+	m := &MpNews{
 		Title: "测试标题1",
 		Path:  "file/lake.jpg",
 		//MediaId:   imgId,
@@ -128,21 +128,21 @@ func TestAllApi(t *testing.T) {
 		ShowFront: 1,
 	}
 	//发送图文信息
-	err = demo.SendMpnewsMsg(_User, _Department, []*Mpnews{m})
+	err = demo.SendMpnewsMsg(_User, _Department, []*MpNews{m})
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	t.Log("Send msg success.")
 
-	link := &Exlink{
+	link := &ExLink{
 		Title:  "这是一个标题",
 		Url:    "http://www.zhbuswx.com/busline/BusQuery.html?v=1.97#/",
 		Digest: "外链摘要",
 		Path:   "file/lake.jpg",
 		//MediaId: imgId,
 	}
-	err = demo.SendExlinkMsg(_User, _Department, []*Exlink{link})
+	err = demo.SendExlinkMsg(_User, _Department, []*ExLink{link})
 	if err != nil {
 		t.Error(err)
 		return

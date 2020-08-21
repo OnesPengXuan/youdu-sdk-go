@@ -1,6 +1,6 @@
 package ydapp
 
-type Mpnews struct {
+type MpNews struct {
 	Title     string
 	MediaId   string
 	Path      string
@@ -10,7 +10,7 @@ type Mpnews struct {
 	ShowFront int32
 }
 
-type Exlink struct {
+type ExLink struct {
 	Title   string
 	Url     string
 	Digest  string

@@ -19,23 +19,18 @@ const (
 	HttpJsonType = "application/json"
 )
 
-var (
-	Buin      int32
-	AppId     string
-	EncAesKey string
-)
-
 type Receiver interface {
 	Receive(*ReceiveMsg)
 }
 
 type MsgApp struct {
-	buin     int32
-	aesKey   []byte
-	appId    string
-	accToken string
-	recv     Receiver
-	hc       *http.Client
+	buin       int32
+	aesKey     []byte
+	appId      string
+	accToken   string
+	serverAddr string
+	recv       Receiver
+	hc         *http.Client
 }
 
 /*
@@ -43,7 +38,7 @@ type MsgApp struct {
 	@appId 应用的id
 	@encAesKey base64编码后的AesKey(256位长度)
 */
-func NewMsgApp(buin int32, appId, encAesKey string) (*MsgApp, error) {
+func NewMsgApp(buin int32, appId, encAesKey, serverAddr string) (*MsgApp, error) {
 	key, err := base64.StdEncoding.DecodeString(encAesKey)
 	if err != nil {
 		return nil, errors.New("Base64 decode error: " + err.Error())
@@ -52,10 +47,11 @@ func NewMsgApp(buin int32, appId, encAesKey string) (*MsgApp, error) {
 		return nil, errors.New("invalid aes key size")
 	}
 	return &MsgApp{
-		buin:   buin,
-		aesKey: key,
-		appId:  appId,
-		hc:     &http.Client{},
+		buin:       buin,
+		aesKey:     key,
+		appId:      appId,
+		serverAddr: serverAddr,
+		hc:         &http.Client{},
 	}, nil
 }
 
@@ -78,7 +74,7 @@ func (m *MsgApp) decrypt(s string) (*RawMsg, error) {
 }
 
 func (m *MsgApp) post(api, ct string, req []byte) (*ApiResponse, error) {
-	httpRsp, err := m.hc.Post(ServerAddr+api+"?accessToken="+m.accToken, ct, bytes.NewBuffer(req))
+	httpRsp, err := m.hc.Post(m.serverAddr+api+"?accessToken="+m.accToken, ct, bytes.NewBuffer(req))
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +95,7 @@ func (m *MsgApp) post(api, ct string, req []byte) (*ApiResponse, error) {
 }
 
 func (m *MsgApp) get(api string, queryStr map[string]string) (*ApiResponse, error) {
-	req, err := http.NewRequest("GET", ServerAddr+api+"?accessToken="+m.accToken, nil)
+	req, err := http.NewRequest("GET", m.serverAddr+api+"?accessToken="+m.accToken, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +125,7 @@ func (m *MsgApp) get(api string, queryStr map[string]string) (*ApiResponse, erro
 }
 
 func (m *MsgApp) getFile(req []byte) ([]byte, error) {
-	httpRsp, err := m.hc.Post(ServerAddr+API_DOWNLOAD_FILE+"?accessToken="+m.accToken, HttpJsonType, bytes.NewBuffer(req))
+	httpRsp, err := m.hc.Post(m.serverAddr+API_DOWNLOAD_FILE+"?accessToken="+m.accToken, HttpJsonType, bytes.NewBuffer(req))
 	if err != nil {
 		return nil, err
 	}

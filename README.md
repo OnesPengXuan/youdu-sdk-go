@@ -39,11 +39,11 @@ const (
 	_AppId     = `yd37D192E9F20E448192827A001A84D443`
 	_EncAesKey = `AY2O92Lpyr4M2IOXT05NQG3eaXd72FlS/QZ1l4vGKsQ=`
 	_User      = "sa08"
+    _ServerAddr = "http://localhost:7080"
 )
 
 func main() {
-	ydapp.ServerAddr = "http://localhost:7080" //设置服务器地址
-	app, err := ydapp.NewMsgApp(_Buin, _AppId, _EncAesKey)
+	app, err := ydapp.NewMsgApp(_Buin, _AppId, _EncAesKey, _ServerAddr)
 	if err != nil {
 		log.Println("New app error:", err)
 		return

@@ -1,6 +1,6 @@
 package ydapp
 
-var ServerAddr string                         //服务器地址和端口(协议务必带上)，例: http://localhost:7080
+//var ServerAddr string                         //服务器地址和端口(协议务必带上)，例: http://localhost:7080
 var CallbackUrl string = "/receive/youdu/msg" //设置回调的URI
 
 // 第三方接口URL

@@ -13,11 +13,11 @@ const (
 	_EncAesKey  = `AY2O92Lpyr4M2IOXT05NQG3eaXd72FlS/QZ1l4vGKsQ=`
 	_User       = "sa08"
 	_Department = ""
+	_ServerAddr = "http://localhost:7080"
 )
 
 func TestAllApi(t *testing.T) {
-	ServerAddr = "http://localhost:7080"
-	demo, _ := NewMsgApp(_Buin, _AppId, _EncAesKey)
+	demo, _ := NewMsgApp(_Buin, _AppId, _EncAesKey, _ServerAddr)
 
 	go http.ListenAndServe(":8899", demo)
 
@@ -128,7 +128,7 @@ func TestAllApi(t *testing.T) {
 		ShowFront: 1,
 	}
 	//发送图文信息
-	err = demo.SendMpnewsMsg(_User, _Department, []*MpNews{m})
+	err = demo.SendMpNewsMsg(_User, _Department, []*MpNews{m})
 	if err != nil {
 		t.Error(err)
 		return
@@ -142,7 +142,7 @@ func TestAllApi(t *testing.T) {
 		Path:   "file/lake.jpg",
 		//MediaId: imgId,
 	}
-	err = demo.SendExlinkMsg(_User, _Department, []*ExLink{link})
+	err = demo.SendExLinkMsg(_User, _Department, []*ExLink{link})
 	if err != nil {
 		t.Error(err)
 		return
